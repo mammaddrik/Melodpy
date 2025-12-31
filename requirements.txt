@@ -1,0 +1,6 @@
+pillow
+mutagen
+pygame
+lyricsgenius
+arabic_reshaper
+python-bidi
