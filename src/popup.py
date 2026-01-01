@@ -29,7 +29,7 @@ def show_popup(root, message):
         text=message,
         fg="white",
         bg="#262b2b",
-        font=fonts["popup_font"],
+        font=fonts["title_font"],
         anchor="center",
         wraplength=360,
         justify="center"
