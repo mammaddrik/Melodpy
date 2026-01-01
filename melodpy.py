@@ -58,6 +58,18 @@ fonts = create_fonts(root)
 header(root, fonts)
 pygame.mixer.init()
 
+#::::: Song Data :::::
+song_files = []
+active_playlist = []
+current_playlist_index = 0
+current_index = 0
+offset_sec = 0
+paused = False
+is_playing = False
+is_loop = False
+search_cache = {}
+card_widgets = []
+
 #::::: Main :::::
 main = tk.Frame(root, bg="#00ffff")
 main.pack(fill="both", expand=True, padx=20, pady=10)
@@ -74,7 +86,7 @@ library_icon.pack(side="left", padx=(0, 5))
 library_label = tk.Label(library_header, text="Library", fg="#ffffff", bg="#1f2323", font=fonts["menus_font"])
 library_label.pack(side="left", anchor="w")
 
-# ---------- LIBRARY SCROLL ----------
+#::::: Library Scroll :::::
 library_canvas = tk.Canvas(content, bg="#1f2323", bd=0, highlightthickness=0)
 library_canvas.pack(side="top", fill="x", expand=False)
 albums_frame = tk.Frame(library_canvas, bg="#1f2323")
