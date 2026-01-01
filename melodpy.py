@@ -59,12 +59,20 @@ header(root, fonts)
 pygame.mixer.init()
 
 #::::: Main :::::
-main = tk.Frame(root, bg="#1f2323")
-main.pack(fill="both", expand=True, padx=10, pady=10)
-content = tk.Frame(root, bg="#1f2323")
+main = tk.Frame(root, bg="#00ffff")
+main.pack(fill="both", expand=True, padx=20, pady=10)
+content = tk.Frame(root, bg="#ffbb00")
 content.pack(fill="both", expand=True, padx=10, pady=10)
 
-
+#::::: Menus :::::
+library_header = tk.Frame(main, bg="#1f2323")
+library_header.pack(fill="x", pady=5)
+library_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/library.png").resize((24, 24)))
+heart_empty_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/heart_empty.png").resize((24, 24)))
+library_icon = tk.Label(library_header, image=library_icon_img, bg="#1f2323", bd=0, highlightthickness=0)
+library_icon.pack(side="left", padx=(0, 5))
+library_label = tk.Label(library_header, text="Library", fg="#ffffff", bg="#1f2323", font=fonts["menus_font"])
+library_label.pack(side="left", anchor="w")
 
 root.mainloop()
 
