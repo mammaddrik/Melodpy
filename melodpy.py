@@ -18,10 +18,11 @@
 try:
     import pygame
     import mutagen
+    import regex
+    import arabic_reshaper
     from mutagen.mp3 import MP3
     from mutagen.id3 import ID3, TIT2, TPE1, TCON, TDRC
     from lyricsgenius import Genius
-    import arabic_reshaper
     from bidi.algorithm import get_display
     from PIL import Image, ImageTk
 except ImportError:
@@ -37,16 +38,14 @@ import subprocess
 import sys
 import json
 import socket
+import webbrowser
 
 #::::: Fonts :::::
 from font.font import create_fonts
 
-#::::: Src :::::
-from src.header import header
-
-#::::: Window :::::
+#::::: Melodpy :::::
 root = tk.Tk()
-w, h = 1230, 480
+w, h = 1200, 480
 screen_w = root.winfo_screenwidth()
 screen_h = root.winfo_screenheight()
 x = (screen_w - w) // 2
@@ -55,89 +54,50 @@ root.geometry(f"{w}x{h}+{x}+{y}")
 root.configure(bg="#1f2323")
 root.overrideredirect(True)
 fonts = create_fonts(root)
-header(root, fonts)
+# root.resizable(0, 0)
 pygame.mixer.init()
 
-#::::: Song Data :::::
-song_files = []
-active_playlist = []
-current_playlist_index = 0
-current_index = 0
-offset_sec = 0
-paused = False
-is_playing = False
-is_loop = False
-search_cache = {}
-card_widgets = []
+#::::: Header :::::
+header = tk.Frame(root, bg="#1f2323", height=50)
+header.pack(fill="x", side="top")
+title = tk.Label(header, text="Melodpy", bg="#3a3f3f", fg="#ffffff",
+                 font=fonts["header_font"], padx=20, pady=6)
+title.place(relx=0.5, anchor="n")
+canvas = tk.Canvas(header, width=20, height=20, bg="#1f2424", highlightthickness=0)
+canvas.pack(side="right", padx=10, pady=10)
+circle = canvas.create_oval(2, 2, 18, 18, fill="#c94a44", outline="")
+
+def on_enter(e):
+    canvas.itemconfig(circle, fill="#e0443e")
+def on_leave(e):
+    canvas.itemconfig(circle, fill="#ff5f56")
+def close_app(e):
+    save_favorites()
+    root.destroy()
+
+canvas.bind("<Enter>", on_enter)
+canvas.bind("<Leave>", on_leave)
+canvas.bind("<Button-1>", close_app)
+
+def start_move(e):
+    header._x = e.x_root - root.winfo_x()
+    header._y = e.y_root - root.winfo_y()
+
+def do_move(e):
+    x = e.x_root - header._x
+    y = e.y_root - header._y
+    root.geometry(f"+{x}+{y}")
+
+header.bind("<Button-1>", start_move)
+header.bind("<B1-Motion>", do_move)
+title.bind("<Button-1>", start_move)
+title.bind("<B1-Motion>", do_move)
 
 #::::: Main :::::
-main = tk.Frame(root, bg="#00ffff")
-main.pack(fill="both", expand=True, padx=20, pady=10)
-content = tk.Frame(root, bg="#ffbb00")
+main = tk.Frame(root, bg="#1f2323")
+main.pack(fill="both", expand=True,pady=8)
+content = tk.Frame(main, bg="#1f2323")
 content.pack(fill="both", expand=True, padx=10, pady=10)
-
-#::::: Menus :::::
-library_header = tk.Frame(main, bg="#1f2323")
-library_header.pack(fill="x", pady=5)
-library_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/library.png").resize((24, 24)))
-heart_empty_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/heart_empty.png").resize((24, 24)))
-library_icon = tk.Label(library_header, image=library_icon_img, bg="#1f2323", bd=0, highlightthickness=0)
-library_icon.pack(side="left", padx=(0, 5))
-library_label = tk.Label(library_header, text="Library", fg="#ffffff", bg="#1f2323", font=fonts["menus_font"])
-library_label.pack(side="left", anchor="w")
-
-#::::: Library Scroll :::::
-library_canvas = tk.Canvas(content, bg="#1f2323", bd=0, highlightthickness=0)
-library_canvas.pack(side="top", fill="x", expand=False)
-albums_frame = tk.Frame(library_canvas, bg="#1f2323")
-library_canvas.create_window((0, 0), window=albums_frame, anchor="nw")
-def update_scrollregion(event=None):
-    library_canvas.configure(scrollregion=library_canvas.bbox("all"))
-albums_frame.bind("<Configure>", update_scrollregion)
-def on_mousewheel(event):
-    scroll_speed = 0.03
-    if sys.platform.startswith("win"):
-        delta = -1 * (event.delta / 120)
-    elif sys.platform.startswith("linux"):
-        delta = -1 if event.num == 5 else 1
-    else:
-        delta = -1 * (event.delta)
-    current = library_canvas.xview()[0]
-    new = current + delta * scroll_speed
-    new = max(0, min(new, 1))
-    library_canvas.xview_moveto(new)
-
-library_canvas.bind_all("<MouseWheel>", on_mousewheel)
-library_canvas.bind_all("<Button-4>", on_mousewheel)
-library_canvas.bind_all("<Button-5>", on_mousewheel)
-
-
-#::::: Search :::::
-search_var = tk.StringVar()
-search_frame = tk.Frame(library_header, bg="#2b3030")
-search_frame.pack(side="right", padx=5, pady=5)
-search_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/search.png").resize((24, 24)))
-search_icon = tk.Label(search_frame, image=search_icon_img, bg="#2b3030", bd=0, highlightthickness=0)
-search_icon.pack(side="left", padx=3)
-search_entry = tk.Entry(search_frame, textvariable=search_var, font=fonts["title_font"], bg="#2b3030", fg="white", insertbackground="white", relief="flat", bd=0, highlightthickness=0, width=25)
-search_entry.pack(side="left")
-placeholder_text = "Search song or artist..."
-
-def on_entry_click(event):
-    if search_entry.get() == placeholder_text:
-        search_entry.delete(0, "end")
-        search_entry.config(fg="white")
-
-def on_focusout(event):
-    if search_entry.get() == "":
-        search_entry.insert(0, placeholder_text)
-        search_entry.config(fg="gray")
-        root.focus()
-
-search_entry.insert(0, placeholder_text)
-search_entry.config(fg="gray")
-search_entry.bind("<FocusIn>", on_entry_click)
-search_entry.bind("<FocusOut>", on_focusout)
 
 root.mainloop()
 
