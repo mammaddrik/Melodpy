@@ -85,6 +85,8 @@ original_title_text = ""
 original_artist_text = ""
 scroll_title_pos = 0
 scroll_artist_pos = 0
+is_muted = False
+prev_volume = 70
 
 #::::: Header :::::
 header = tk.Frame(root, bg="#1f2323", height=50)
@@ -201,8 +203,8 @@ content = tk.Frame(main, bg="#1f2323")
 content.pack(fill="both", expand=True, padx=10, pady=10)
 library_header = tk.Frame(content, bg="#1f2323")
 library_header.pack(fill="x", pady=5)
-library_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/library.png").resize((24, 24)))
-heart_empty_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/heart_empty.png").resize((24, 24)))
+library_icon_img = ImageTk.PhotoImage(Image.open("assets/assets/icons/library.png").resize((24, 24)))
+heart_empty_icon_img = ImageTk.PhotoImage(Image.open("assets/assets/icons/heart_empty.png").resize((24, 24)))
 library_icon = tk.Label(library_header, image=library_icon_img, bg="#1f2323", bd=0, highlightthickness=0)
 library_icon.pack(side="left", padx=(0, 5))
 library_label = tk.Label(library_header, text="Library", fg="#ffffff", bg="#1f2323", font=fonts["menus_font"])
@@ -234,7 +236,7 @@ albums_frame.bind("<Configure>", update_scrollregion)
 search_var = tk.StringVar()
 search_frame = tk.Frame(library_header, bg="#2b3030")
 search_frame.pack(side="right", padx=5, pady=5)
-search_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/search.png").resize((24, 24)))
+search_icon_img = ImageTk.PhotoImage(Image.open("assets/assets/icons/search.png").resize((24, 24)))
 search_icon = tk.Label(search_frame, image=search_icon_img, bg="#2b3030", bd=0, highlightthickness=0)
 search_icon.pack(side="left", padx=3)
 search_entry = tk.Entry(search_frame, textvariable=search_var, font=fonts["title_font"], bg="#2b3030",
@@ -493,6 +495,143 @@ progress_slider.bind(
         "break"
     )
 )
+
+def play_from_position(seconds):
+    global offset_sec, paused, is_playing
+
+    offset_sec = seconds
+    pygame.mixer.music.stop()
+    pygame.mixer.music.play()
+    pygame.mixer.music.set_pos(offset_sec)
+
+    paused = False
+    is_playing = True
+    play_pause_btn.config(image=pause_icon)
+
+def set_song_position(val):
+    try:
+        play_from_position(float(val))
+    except:
+        pass
+def choose_folder():
+    global songs_folder, song_files, card_widgets, search_cache, active_playlist, current_playlist_index, current_index
+    folder = filedialog.askdirectory()
+    if not folder:
+        return
+    if folder:
+        songs_folder = folder
+        song_files = [os.path.join(songs_folder, f) for f in os.listdir(songs_folder) if f.endswith(".mp3")]
+        song_files.sort()
+        active_playlist = song_files.copy()
+        current_playlist_index = 0
+        current_index = 0
+        for card, mp3, idx in card_widgets:
+            card.destroy()
+        card_widgets.clear()
+        search_cache.clear()
+        for i, mp3 in enumerate(song_files):
+            album_card(albums_frame, mp3, i)
+        update_scrollregion()
+        load_favorites()
+    if song_files:
+        play_song(0)
+
+def toggle_loop():
+    global is_loop
+    is_loop = not is_loop
+    loop_btn.config(image=loop_icon_on if is_loop else loop_icon_off)
+
+# ---------- ICONS ----------
+play_icon = ImageTk.PhotoImage(Image.open("assets/icons/play.png").resize((30,30)))
+pause_icon = ImageTk.PhotoImage(Image.open("assets/icons/pause.png").resize((30,30)))
+next_icon = ImageTk.PhotoImage(Image.open("assets/icons/next.png").resize((30,30)))
+prev_icon = ImageTk.PhotoImage(Image.open("assets/icons/prev.png").resize((30,30)))
+loop_icon_off = ImageTk.PhotoImage(Image.open("assets/icons/loop_off.png").resize((30,30)))
+loop_icon_on  = ImageTk.PhotoImage(Image.open("assets/icons/loop_on.png").resize((30,30)))
+shuffle_icon  = ImageTk.PhotoImage(Image.open("assets/icons/shuffle.png").resize((30,30)))
+seek_back_icon = ImageTk.PhotoImage(Image.open("assets/icons/seek_back.png").resize((30,30)))
+seek_forward_icon = ImageTk.PhotoImage(Image.open("assets/icons/seek_forward.png").resize((30,30)))
+folder_btn_icon = ImageTk.PhotoImage(Image.open("assets/icons/folder.png").resize((30,30)))
+volume_mute_icon = ImageTk.PhotoImage(Image.open("assets/icons/volume_mute.png").resize((20,20)))
+volume_low_icon = ImageTk.PhotoImage(Image.open("assets/icons/volume_low.png").resize((20,20)))
+volume_medium_icon = ImageTk.PhotoImage(Image.open("assets/icons/volume_medium.png").resize((20,20)))
+volume_high_icon = ImageTk.PhotoImage(Image.open("assets/icons/volume_high.png").resize((20,20)))
+
+controls = tk.Frame(player_frame, bg="#262b2b")
+controls.pack(side="top", pady=5, fill="x")
+prev_btn = tk.Button(controls, image=prev_icon, bg="#262b2b", fg="white", bd=0, highlightthickness=0, relief="flat", command=prev_song)
+prev_btn.pack(side="left", padx=5)
+play_pause_btn = tk.Button(controls, image=play_icon, bg="#262b2b", fg="white", bd=0, highlightthickness=0, relief="flat", command=toggle_play_pause)
+play_pause_btn.pack(side="left", padx=5)
+seek_back_btn = tk.Button(controls, image=seek_back_icon, bg="#262b2b", bd=0,highlightthickness=0, relief="flat", command=seek_backward_10)
+seek_back_btn.pack(side="left", padx=5)
+next_btn = tk.Button(controls, image=next_icon, bg="#262b2b", fg="white", bd=0, highlightthickness=0, relief="flat", command=next_song)
+next_btn.pack(side="left", padx=5)
+seek_forward_btn = tk.Button(controls, image=seek_forward_icon, bg="#262b2b", bd=0, highlightthickness=0, relief="flat", command=seek_forward_10)
+seek_forward_btn.pack(side="left", padx=5)
+loop_btn = tk.Button(controls, image=loop_icon_off, bg="#262b2b", fg="white", bd=0, highlightthickness=0, relief="flat", command=toggle_repeat)
+loop_btn.pack(side="left", padx=5)
+folder_btn = tk.Button(controls, image=folder_btn_icon, bg="#262b2b", bd=0, highlightthickness=0, relief="flat", command=choose_folder)
+folder_btn.pack(side="left", padx=5)
+volume_frame = tk.Frame(controls, bg="#262b2b")
+volume_frame.pack(side="right", padx=10,)
+volume_icon = tk.Label(volume_frame, image=volume_medium_icon, bg="#262b2b", bd=0, highlightthickness=0)
+volume_icon.pack(side="left", padx=(0,5))
+
+def update_volume_icon(val=None):
+    global is_muted
+    vol = int(volume_slider.get())
+    if is_muted or vol == 0:
+        volume_icon.config(image=volume_mute_icon)
+    elif vol < 40:
+        volume_icon.config(image=volume_low_icon)
+    elif vol < 80:
+        volume_icon.config(image=volume_medium_icon)
+    else:
+        volume_icon.config(image=volume_high_icon)
+
+def toggle_mute(event=None):
+    global is_muted, prev_volume
+    if not is_muted:
+        prev_volume = volume_slider.get()
+        volume_slider.set(0)
+        pygame.mixer.music.set_volume(0)
+        is_muted = True
+    else:
+        volume_slider.set(prev_volume)
+        pygame.mixer.music.set_volume(prev_volume/100)
+        is_muted = False
+    update_volume_icon()
+
+volume_icon.bind("<Button-1>", toggle_mute)
+
+volume_slider = tk.Scale(volume_frame, from_=0, to=100, orient="horizontal", bg="#262b2b", troughcolor="#444", highlightthickness=0, bd=0, length=120, showvalue=False, sliderrelief="flat", command=lambda v: set_volume(v))
+volume_slider.set(70)
+volume_slider.pack(side="left")
+volume_value = tk.Label(volume_frame, text="70%", fg="white", bg="#262b2b", font=fonts["title_font"], width=4, anchor="e")
+volume_value.pack(side="right", padx=5)
+
+def set_volume(val):
+    global is_muted
+    vol = int(float(val))
+    pygame.mixer.music.set_volume(vol/100)
+    volume_value.config(text=f"{vol}%")
+    if vol > 0:
+        is_muted = False
+    update_volume_icon()
+
+volume_slider.bind(
+    "<Button-1>",
+    lambda e: (
+        volume_slider.set(
+            min(100, volume_slider.get() + 4)
+            if e.x > volume_slider.winfo_width() / 2
+            else max(0, volume_slider.get() - 4)
+        ),
+        set_volume(volume_slider.get())
+    )
+)
+
 
 root.mainloop()
 
