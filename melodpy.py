@@ -67,11 +67,23 @@ fonts = create_fonts(root)
 # root.resizable(0, 0)
 pygame.mixer.init()
 
+#:::::  :::::
+song_files = []
+active_playlist = []
+current_playlist_index = 0
+current_index = 0
+offset_sec = 0
+paused = False
+is_playing = False
+is_loop = False
+search_cache = {}
+card_widgets = []
+lyric_is_open = False
+
 #::::: Header :::::
 header = tk.Frame(root, bg="#1f2323", height=50)
 header.pack(fill="x", side="top")
-title = tk.Label(header, text="Melodpy", bg="#3a3f3f", fg="#ffffff",
-                 font=fonts["header_font"], padx=20, pady=6)
+title = tk.Label(header, text="Melodpy", bg="#3a3f3f", fg="#ffffff", font=fonts["header_font"], padx=20, pady=6)
 title.place(relx=0.5, anchor="n")
 canvas = tk.Canvas(header, width=20, height=20, bg="#1f2424", highlightthickness=0)
 canvas.pack(side="right", padx=10, pady=10)
@@ -82,7 +94,7 @@ def on_enter(e):
 def on_leave(e):
     canvas.itemconfig(circle, fill="#ff5f56")
 def close_app(e):
-    # save_favorites()
+    save_favorites()
     root.destroy()
 
 canvas.bind("<Enter>", on_enter)
@@ -102,6 +114,37 @@ header.bind("<Button-1>", start_move)
 header.bind("<B1-Motion>", do_move)
 title.bind("<Button-1>", start_move)
 title.bind("<B1-Motion>", do_move)
+
+#::::: Favorites :::::
+FAVORITES_FILE = "favorites.json"
+def save_favorites():
+    current_favs = [mp3 for card, mp3, idx in card_widgets if getattr(card, "is_favorite", False)]
+    try:
+        with open(FAVORITES_FILE, "w") as f:
+            json.dump(current_favs, f, indent=4)
+    except Exception as e:
+        pass
+
+def on_closing():
+    save_favorites()
+    root.destroy()
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
+
+def load_favorites():
+    try:
+        with open(FAVORITES_FILE, "r") as f:
+            fav_list = json.load(f)
+    except:
+        fav_list = []
+    valid_favs = [f for f in fav_list if os.path.exists(f)]
+    if valid_favs != fav_list:
+        with open(FAVORITES_FILE, "w") as f:
+            json.dump(valid_favs, f)
+    for card, mp3, idx in card_widgets:
+        if mp3 in valid_favs:
+            card.is_favorite = True
+            card.heart_label.config(image=card.heart_filled)
 
 #::::: Check Connection :::::
 def is_connected():
@@ -133,6 +176,7 @@ def popup(message, title="Info", width = 400, height = 140):
     tk.Label(frame, text=message, fg="white", bg="#262b2b", font=fonts["message"], anchor="center").pack(pady=(0, 10))
     tk.Button(frame, text="Close", command=popup.destroy, bg="#3a3f3f", fg="white", font=fonts["button_font"], bd=0, relief="flat", highlightthickness=0, width=12, height=2).pack(pady=(0, 15))
 
+#::::: Open Github :::::
 def open_github(event=None):
     if not is_connected():
         popup("You are not connected to the internet.\nPlease check your connection and try again.",title="No Internet Connection")
@@ -162,6 +206,24 @@ library_canvas.pack(side="top", fill="x", expand=False)
 albums_frame = tk.Frame(library_canvas, bg="#1f2323")
 library_canvas.create_window((0, 0), window=albums_frame, anchor="nw")
 
+def on_mousewheel(event):
+    if lyric_is_open:
+        return
+    widget = event.widget
+    if widget.winfo_class() in ("Text", "Scrollbar"):
+        return
+    if sys.platform.startswith(("win", "linux")):
+        library_canvas.xview_scroll(-1 * int(event.delta / 120), "units")
+    else:
+        library_canvas.xview_scroll(-1 * int(event.delta), "units")
+
+main.bind_all("<MouseWheel>", on_mousewheel)
+
+def update_scrollregion(event=None):
+    library_canvas.configure(scrollregion=library_canvas.bbox("all"))
+
+albums_frame.bind("<Configure>", update_scrollregion)
+
 #::::: Search :::::
 search_var = tk.StringVar()
 search_frame = tk.Frame(library_header, bg="#2b3030")
@@ -186,6 +248,8 @@ search_entry.insert(0, placeholder_text)
 search_entry.config(fg="gray")
 search_entry.bind("<FocusIn>", on_entry_click)
 search_entry.bind("<FocusOut>", on_focusout)
+
+#::::: Functions :::::
 
 root.mainloop()
 
