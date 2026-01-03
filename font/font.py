@@ -10,7 +10,7 @@ def create_fonts(root):
         "title_font": tkfont.Font(name="AgaveCustom", exists=True),
         "header_font": ("Agave Nerd Font", 15, "bold"),
         "menus_font": ("Agave Nerd Font", 20, "bold"),
-        "card_artist_font": ("Agave Nerd Font", 10, "bold"),
+        "artist_font": ("Agave Nerd Font", 10, "bold"),
         "info_title": ("Agave Nerd Font", 14, "bold"),
         "message": ("Agave Nerd Font", 12),
         "button_font": ("Agave Nerd Font", 10)

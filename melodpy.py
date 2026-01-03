@@ -79,6 +79,12 @@ is_loop = False
 search_cache = {}
 card_widgets = []
 lyric_is_open = False
+repeat_states = ["off", "one", "shuffle"]
+repeat_state = "off"
+original_title_text = ""
+original_artist_text = ""
+scroll_title_pos = 0
+scroll_artist_pos = 0
 
 #::::: Header :::::
 header = tk.Frame(root, bg="#1f2323", height=50)
@@ -249,7 +255,244 @@ search_entry.config(fg="gray")
 search_entry.bind("<FocusIn>", on_entry_click)
 search_entry.bind("<FocusOut>", on_focusout)
 
-#::::: Functions :::::
+#::::: Player :::::
+def get_song_info(mp3_path):
+    audio = MP3(mp3_path, ID3=ID3)
+    title = audio.tags.get("TIT2")
+    artist = audio.tags.get("TPE1")
+    cover_data = None
+    for tag in audio.tags.keys():
+        if tag.startswith("APIC"):
+            cover_data = audio.tags[tag].data
+            break
+    title = title.text[0] if title else os.path.basename(mp3_path)
+    artist = artist.text[0] if artist else "Unknown"
+    length = audio.info.length
+    return title, artist, cover_data, length
+
+def play_song_by_path(mp3_path):
+    if mp3_path in active_playlist:
+        global current_playlist_index
+        current_playlist_index = active_playlist.index(mp3_path)
+        song_index = song_files.index(mp3_path)
+        play_song(song_index)
+
+def highlight_current_card():
+    for card, mp3, idx in card_widgets:
+        bg_color = "#3a3f3f" if idx == current_index else "#2b3030"
+        card.config(bg=bg_color)
+        for child in card.winfo_children():
+            if isinstance(child, tk.Label):
+                child.config(bg=bg_color)
+
+def play_song(index_in_song_files, start_pos=0):
+    global current_index, offset_sec, paused, is_playing, current_playlist_index
+    current_index = index_in_song_files
+    offset_sec = start_pos
+    paused = False
+    is_playing = True
+    song_path = song_files[current_index]
+    with open(os.devnull, "w"), contextlib.redirect_stderr(None):
+        pygame.mixer.music.load(song_path)
+        pygame.mixer.music.play(start=start_pos)
+    update_song_ui()
+    highlight_current_card()
+    play_pause_btn.config(image=pause_icon)
+    if song_path in active_playlist:
+        current_playlist_index = active_playlist.index(song_path)
+    progress_slider.set(offset_sec)
+    elapsed_time_label.config(text=f"{int(offset_sec//60)}:{int(offset_sec%60):02d}")
+
+def toggle_play_pause():
+    global is_playing, paused
+    if not song_files:
+        return
+    if not is_playing and not paused:
+        play_song(0)
+        return
+
+    if is_playing:
+        pygame.mixer.music.pause()
+        paused = True
+        is_playing = False
+        play_pause_btn.config(image=play_icon)
+    else:
+        if paused:
+            pygame.mixer.music.unpause()
+        else:
+            play_from_position(offset_sec)
+        paused = False
+        is_playing = True
+        play_pause_btn.config(image=pause_icon)
+    highlight_current_card()
+
+def toggle_repeat():
+    global repeat_state
+    idx = repeat_states.index(repeat_state)
+    repeat_state = repeat_states[(idx + 1) % len(repeat_states)]
+    if repeat_state == "off":
+        loop_btn.config(image=loop_icon_off)
+    elif repeat_state == "one":
+        loop_btn.config(image=loop_icon_on)
+    elif repeat_state == "shuffle":
+        loop_btn.config(image=shuffle_icon)
+
+def next_song():
+    global current_playlist_index
+    if not active_playlist:
+        return
+    
+    if repeat_state == "one":
+        song_path = active_playlist[current_playlist_index]
+        play_song(song_files.index(song_path))
+    elif repeat_state == "shuffle":
+        import random
+        remaining_songs = [song for song in active_playlist if song != active_playlist[current_playlist_index]]
+        if remaining_songs:
+            song_path = random.choice(remaining_songs)
+            current_playlist_index = active_playlist.index(song_path)
+        else:
+            song_path = active_playlist[current_playlist_index]
+        play_song(song_files.index(song_path))
+    else:
+        current_playlist_index = (current_playlist_index + 1) % len(active_playlist)
+        song_path = active_playlist[current_playlist_index]
+        play_song(song_files.index(song_path))
+
+def prev_song():
+    global current_playlist_index
+    if not active_playlist:
+        return
+    current_playlist_index = (current_playlist_index - 1) % len(active_playlist)
+    song_path = active_playlist[current_playlist_index]
+    play_song(song_files.index(song_path))
+
+def get_current_time_sec():
+    pos = pygame.mixer.music.get_pos()
+    if pos < 0:
+        pos = 0
+    return offset_sec + (pos / 1000)
+
+def seek_forward_10():
+    if not song_files:
+        return
+    new_pos = min(get_current_time_sec() + 10, progress_slider.cget("to"))
+    play_from_position(new_pos)
+
+def seek_backward_10():
+    if not song_files:
+        return
+    new_pos = max(get_current_time_sec() - 10, 0)
+    play_from_position(new_pos)
+
+def filter_songs(*args):
+    query = search_var.get().lower().strip()
+
+    if query == placeholder_text.lower():
+        query = ""
+        root.focus()
+
+    for card, mp3_path, idx in card_widgets:
+        card.pack_forget()
+
+    for card, mp3_path, idx in sorted(card_widgets, key=lambda x: x[2]):
+        data = search_cache.get(mp3_path)
+        if not data:
+            continue
+
+        if query in data["title"] or query in data["artist"]:
+            card.pack(side="left", padx=10)
+
+    update_scrollregion()
+search_var.trace_add("write", filter_songs)
+
+player_frame = tk.Frame(root, bg="#262b2b", height=160)
+player_frame.pack(fill="x", side="bottom")
+info_frame = tk.Frame(player_frame, bg="#262b2b")
+info_frame.pack(side="left", padx=10)
+cover_label = tk.Label(info_frame, bg="#262b2b")
+cover_label.pack(side="left", padx=(0,10))
+song_title = tk.Label(info_frame, text="", fg="white", bg="#262b2b",font=fonts["title_font"], width=20, anchor="w")
+song_title.pack(anchor="w", pady=10)
+song_artist = tk.Label(info_frame, text="", fg="#a0a0a0", bg="#262b2b",font=fonts["artist_font"], width=20, anchor="w")
+song_artist.pack(anchor="w")
+
+def set_song_title(title):
+    global original_title_text, scroll_title_pos
+    original_title_text = title + "   "
+    scroll_title_pos = 0
+    song_title.config(text=original_title_text[:20])
+
+def set_song_artist(artist):
+    global original_artist_text, scroll_artist_pos
+    original_artist_text = artist + "   "
+    scroll_artist_pos = 0
+    song_artist.config(text=original_artist_text[:20])
+
+def scroll_texts():
+    global scroll_title_pos, scroll_artist_pos
+    if is_playing:
+        if len(original_title_text) > 20:
+            scroll_title_pos = (scroll_title_pos + 1) % len(original_title_text)
+            display_title = original_title_text[scroll_title_pos:] + original_title_text[:scroll_title_pos]
+            song_title.config(text=display_title[:20])
+        if len(original_artist_text) > 20:
+            scroll_artist_pos = (scroll_artist_pos + 1) % len(original_artist_text)
+            display_artist = original_artist_text[scroll_artist_pos:] + original_artist_text[:scroll_artist_pos]
+            song_artist.config(text=display_artist[:20])
+    root.after(300, scroll_texts)
+scroll_texts()
+
+def update_song_ui():
+    title, artist, cover_data, length = get_song_info(song_files[current_index])
+    set_song_title(title)
+    set_song_artist(artist)
+    total_time_label.config(text=f"{int(length//60)}:{int(length%60):02d}")
+    progress_slider.config(to=length)
+    if cover_data:
+        cover_img = Image.open(io.BytesIO(cover_data))
+    else:
+        cover_img = Image.new("RGB", (60, 60), color="#444")
+    cover_img = cover_img.resize((60, 60))
+    img = ImageTk.PhotoImage(cover_img)
+
+    cover_label.config(image=img)
+    cover_label.image = img
+
+progress_frame = tk.Frame(player_frame, bg="#262b2b")
+progress_frame.pack(side="top", fill="x", pady=5)
+elapsed_time_label = tk.Label(progress_frame, text="0:00", fg="white", bg="#262b2b", font=fonts["title_font"])
+elapsed_time_label.pack(side="left", padx=15)
+progress_var = tk.DoubleVar()
+progress_slider = tk.Scale(progress_frame, variable=progress_var, from_=0, to=100, orient="horizontal", bg="#262b2b", troughcolor="#444",
+                           highlightthickness=0, bd=0, length=500, showvalue=False,
+                           sliderrelief="flat",command=lambda val: set_song_position(val))
+progress_slider.pack(side="left", fill="x", expand=True)
+total_time_label = tk.Label(progress_frame, text="0:00", fg="white", bg="#262b2b", font=fonts["title_font"])
+total_time_label.pack(side="right", padx=15)
+
+def update_progress():
+    global offset_sec, is_playing, paused
+    if pygame.mixer.music.get_busy():
+        pos_sec = pygame.mixer.music.get_pos() / 1000 + offset_sec
+        progress_var.set(pos_sec)
+        elapsed_time_label.config(text=f"{int(pos_sec//60)}:{int(pos_sec%60):02d}")
+    else:
+        if is_playing and not paused:
+            next_song()
+            offset_sec = 0
+    root.after(200, update_progress)
+
+progress_slider.bind(
+    "<Button-1>",
+    lambda e: (
+        progress_slider.set(
+            (e.x / progress_slider.winfo_width()) * progress_slider.cget("to")
+        ),
+        play_from_position(progress_slider.get()),
+        "break"
+    )
+)
 
 root.mainloop()
 
