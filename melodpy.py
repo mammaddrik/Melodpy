@@ -44,7 +44,9 @@ import webbrowser
 from font.font import create_fonts
 
 #::::: Genius :::::
-GENIUS_TOKEN = ""
+with open("token.txt") as f:
+    token = f.read()
+GENIUS_TOKEN = token
 
 genius = Genius(
     GENIUS_TOKEN,
@@ -203,8 +205,8 @@ content = tk.Frame(main, bg="#1f2323")
 content.pack(fill="both", expand=True, padx=10, pady=10)
 library_header = tk.Frame(content, bg="#1f2323")
 library_header.pack(fill="x", pady=5)
-library_icon_img = ImageTk.PhotoImage(Image.open("assets/assets/icons/library.png").resize((24, 24)))
-heart_empty_icon_img = ImageTk.PhotoImage(Image.open("assets/assets/icons/heart_empty.png").resize((24, 24)))
+library_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/library.png").resize((24, 24)))
+heart_empty_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/heart_empty.png").resize((24, 24)))
 library_icon = tk.Label(library_header, image=library_icon_img, bg="#1f2323", bd=0, highlightthickness=0)
 library_icon.pack(side="left", padx=(0, 5))
 library_label = tk.Label(library_header, text="Library", fg="#ffffff", bg="#1f2323", font=fonts["menus_font"])
@@ -236,7 +238,7 @@ albums_frame.bind("<Configure>", update_scrollregion)
 search_var = tk.StringVar()
 search_frame = tk.Frame(library_header, bg="#2b3030")
 search_frame.pack(side="right", padx=5, pady=5)
-search_icon_img = ImageTk.PhotoImage(Image.open("assets/assets/icons/search.png").resize((24, 24)))
+search_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/search.png").resize((24, 24)))
 search_icon = tk.Label(search_frame, image=search_icon_img, bg="#2b3030", bd=0, highlightthickness=0)
 search_icon.pack(side="left", padx=3)
 search_entry = tk.Entry(search_frame, textvariable=search_var, font=fonts["title_font"], bg="#2b3030",
@@ -561,14 +563,14 @@ controls = tk.Frame(player_frame, bg="#262b2b")
 controls.pack(side="top", pady=5, fill="x")
 prev_btn = tk.Button(controls, image=prev_icon, bg="#262b2b", fg="white", bd=0, highlightthickness=0, relief="flat", command=prev_song)
 prev_btn.pack(side="left", padx=5)
-play_pause_btn = tk.Button(controls, image=play_icon, bg="#262b2b", fg="white", bd=0, highlightthickness=0, relief="flat", command=toggle_play_pause)
-play_pause_btn.pack(side="left", padx=5)
 seek_back_btn = tk.Button(controls, image=seek_back_icon, bg="#262b2b", bd=0,highlightthickness=0, relief="flat", command=seek_backward_10)
 seek_back_btn.pack(side="left", padx=5)
-next_btn = tk.Button(controls, image=next_icon, bg="#262b2b", fg="white", bd=0, highlightthickness=0, relief="flat", command=next_song)
-next_btn.pack(side="left", padx=5)
+play_pause_btn = tk.Button(controls, image=play_icon, bg="#262b2b", fg="white", bd=0, highlightthickness=0, relief="flat", command=toggle_play_pause)
+play_pause_btn.pack(side="left", padx=5)
 seek_forward_btn = tk.Button(controls, image=seek_forward_icon, bg="#262b2b", bd=0, highlightthickness=0, relief="flat", command=seek_forward_10)
 seek_forward_btn.pack(side="left", padx=5)
+next_btn = tk.Button(controls, image=next_icon, bg="#262b2b", fg="white", bd=0, highlightthickness=0, relief="flat", command=next_song)
+next_btn.pack(side="left", padx=5)
 loop_btn = tk.Button(controls, image=loop_icon_off, bg="#262b2b", fg="white", bd=0, highlightthickness=0, relief="flat", command=toggle_repeat)
 loop_btn.pack(side="left", padx=5)
 folder_btn = tk.Button(controls, image=folder_btn_icon, bg="#262b2b", bd=0, highlightthickness=0, relief="flat", command=choose_folder)
@@ -632,10 +634,534 @@ volume_slider.bind(
     )
 )
 
+def delete_song(card, path):
+    global song_files, active_playlist, current_playlist_index, current_index
+    card.destroy()
+    if path in song_files:
+        removed_index = song_files.index(path)
+        song_files.remove(path)
+        if current_index >= len(song_files):
+            current_index = max(0, len(song_files) - 1)
+        elif removed_index < current_index:
+            current_index -= 1
+    if path in active_playlist:
+        removed_playlist_index = active_playlist.index(path)
+        active_playlist.remove(path)
+        if current_playlist_index >= len(active_playlist):
+            current_playlist_index = 0
+        elif removed_playlist_index < current_playlist_index:
+            current_playlist_index -= 1
+    global card_widgets
+    card_widgets = [
+        (c, mp3, idx)
+        for c, mp3, idx in card_widgets
+        if mp3 != path
+    ]
+    update_scrollregion()
+    save_favorites()
 
-root.mainloop()
+def edit_metadata(card, path):
+    if path == song_files[current_index]:
+        # Popup
+        return
 
-# try:
-#     root.mainloop()
-# except KeyboardInterrupt:
-#     sys.exit()
+    audio = MP3(path, ID3=ID3)
+
+    def get_tag_text(tag_name):
+        tag = audio.tags.get(tag_name)
+        return tag.text[0] if tag else ""
+
+    audio = MP3(path, ID3=ID3)
+    title = get_tag_text("TIT2")
+    artist = get_tag_text("TPE1")
+    album = get_tag_text("TALB")
+    genre = get_tag_text("TCON")
+    date = str(get_tag_text("TDRC"))
+    track = get_tag_text("TRCK")
+    comment = get_tag_text("COMM")
+    composer = get_tag_text("TCOM")
+    album_artist = get_tag_text("TPE2")
+
+    cover_data = None
+    for tag in audio.tags.keys():
+        if tag.startswith("APIC"):
+            cover_data = audio.tags[tag].data
+            break
+
+    win = tk.Toplevel(root)
+    win.title("Edit Metadata")
+    win.configure(bg="#262b2b", highlightbackground="black", highlightthickness=2)
+    win.geometry("500x650")
+    win.resizable(0, 0)
+    win.transient(root)
+    win.grab_set()
+    win.update_idletasks()
+    x = root.winfo_x() + (root.winfo_width() // 2) - (500 // 2)
+    y = root.winfo_y() + (root.winfo_height() // 2) - (650 // 2)
+    win.geometry(f"+{x}+{y}")
+
+    cover_label = tk.Label(win, bg="#262b2b")
+    cover_label.pack(pady=20)
+    if cover_data:
+        img = Image.open(io.BytesIO(cover_data)).resize((50,50))
+    else:
+        img = Image.new("RGB", (50,50), color="#444")
+    cover_photo = ImageTk.PhotoImage(img)
+    cover_label.config(image=cover_photo)
+    cover_label.image = cover_photo
+    def change_cover():
+        from tkinter import filedialog
+        file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg *.png *.jpeg")])
+        if file_path:
+            img = Image.open(file_path).resize((50,50))
+            cover_photo = ImageTk.PhotoImage(img)
+            cover_label.config(image=cover_photo)
+            cover_label.image = cover_photo
+            cover_label.new_cover_path = file_path
+    cover_label.bind("<Button-1>", lambda e: change_cover())
+
+    labels = ["Title", "Artist", "Album", "Genre", "Date", "Track", "Comment", "Composer", "Album Artist"]
+    vars_ = [tk.StringVar(value=x) for x in [title, artist, album, genre, date, track, comment, composer, album_artist]]
+
+    for i, (label_text, var) in enumerate(zip(labels, vars_)):
+        row_frame = tk.Frame(win, bg="#262b2b")
+        row_frame.pack(fill="x", padx=20, pady=5)
+        tk.Label(row_frame, text=f"{label_text}", fg="white", bg="#262b2b", font=fonts["title_font"], anchor="w").pack(side="top", anchor="w")
+        tk.Entry(row_frame, textvariable=var, width=30, font=fonts["message"], bg="#2b3030", fg="white", insertbackground="white", bd=0, highlightthickness=0).pack(side="top", fill="x", expand=True, pady=2)
+
+    btn_frame = tk.Frame(win, bg="#262b2b")
+    btn_frame.pack(pady=20)
+
+    def save_changes():
+            tag_names = ["TIT2","TPE1","TALB","TCON","TDRC","TRCK","COMM","TCOM","TPE2"]
+            for tname, var in zip(tag_names, vars_):
+                if tname == "COMM":
+                    audio.tags.add(mutagen.id3.COMM(encoding=3, lang="eng", text=var.get()))
+                else:
+                    audio.tags.add(getattr(mutagen.id3, tname)(encoding=3, text=var.get()))
+            if hasattr(cover_label, "new_cover_path"):
+                with open(cover_label.new_cover_path, "rb") as f:
+                    audio.tags.add(mutagen.id3.APIC(encoding=3, mime="image/jpeg", type=3, desc="Cover", data=f.read()))
+                new_cover_img = Image.open(cover_label.new_cover_path).resize((60, 60))
+                new_cover_photo = ImageTk.PhotoImage(new_cover_img)
+                cover_label_main = globals()['cover_label']
+                cover_label_main.config(image=new_cover_photo)
+                cover_label_main.image = new_cover_photo
+                card_widgets_dict = {mp3: c for c, mp3, idx in card_widgets}
+                current_card = card_widgets_dict[path]
+                new_card_cover_img = Image.open(cover_label.new_cover_path).resize((160, 140))
+                new_card_photo = ImageTk.PhotoImage(new_card_cover_img)
+                card_cover_label = current_card.winfo_children()[0]
+                card_cover_label.config(image=new_card_photo)
+                card_cover_label.image = new_card_photo
+            audio.save()
+
+            card_widgets_dict = {mp3: c for c, mp3, idx in card_widgets}
+            current_card = card_widgets_dict[path]
+            display_title = vars_[0].get() if len(vars_[0].get()) <= 20 else vars_[0].get()[:17] + "..."
+            display_artist = vars_[1].get() if len(vars_[1].get()) <= 20 else vars_[1].get()[:17] + "..."
+            current_card.winfo_children()[1].config(text=display_title)
+            current_card.winfo_children()[2].config(text=display_artist)
+
+            if path == song_files[current_index]:
+                update_song_ui()
+                highlight_current_card()
+            search_cache[path] = {
+                    "title": vars_[0].get().lower(),
+                    "artist": vars_[1].get().lower()
+            }
+            win.destroy()
+
+    tk.Button(btn_frame, text="Save", bg="#3a3f3f", fg="white", font=fonts["button_font"], width=12, bd=0, relief="flat", highlightthickness=0, command=save_changes).pack(side="left", padx=10)
+    tk.Button(btn_frame, text="Cancel", bg="#3a3f3f", fg="white", font=fonts["button_font"], width=12, bd=0, relief="flat", highlightthickness=0, command=win.destroy).pack(side="left", padx=10)
+
+def open_location(path):
+    try:
+        if sys.platform == "win32":
+            os.startfile(os.path.dirname(path))
+        elif sys.platform == "darwin":
+            subprocess.run(["open", os.path.dirname(path)])
+        else:
+            subprocess.run(["xdg-open", os.path.dirname(path)])
+    except Exception as e:
+        messagebox.showerror("Error", f"Cannot open folder: {e}")
+
+def show_menu(event, card, mp3_path):
+    def delayed_popup():
+        menu = tk.Menu(root, tearoff=0, bg="#2b3030", fg="white", font=fonts["message"], bd=0, relief="flat")
+
+        def confirm_delete():
+            if mp3_path == song_files[current_index]:
+                popup("Cannot delete the song currently playing.",title="Cannot delete", height=120)
+            else:
+                confirm_win = tk.Toplevel(root)
+                confirm_win.configure(bg="#262b2b")
+                confirm_win.title("Confirm Delete")
+                confirm_win.geometry("400x120")
+                confirm_win.resizable(0, 0)
+                confirm_win.overrideredirect(True)
+                confirm_win.grab_set()
+                confirm_win.update_idletasks()
+                root_x = root.winfo_x()
+                root_y = root.winfo_y()
+                root_width = root.winfo_width()
+                root_height = root.winfo_height()
+                width = 400
+                height = 120
+                x = root_x + (root_width // 2) - (width // 2)
+                y = root_y + (root_height // 2) - (height // 2)
+                confirm_win.geometry(f"{width}x{height}+{x}+{y}")
+                frame = tk.Frame(confirm_win, bg="#262b2b")
+                frame.pack(expand=True, fill="both")
+                tk.Label(frame, text="Confirm Delete", fg="white", bg="#262b2b", font=fonts["info_title"]).pack(pady=(15, 5))
+                tk.Label(frame, text="Are you sure you want to delete this song?", fg="white", bg="#262b2b", font=fonts["message"]).pack(pady=(0, 10))
+                btn_frame = tk.Frame(frame, bg="#262b2b")
+                btn_frame.pack()
+
+                def yes_action():
+                    try:
+                        os.remove(mp3_path)
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Could not delete file: {e}")
+                    delete_song(card, mp3_path)
+                    confirm_win.destroy()
+
+                tk.Button(btn_frame, text="Yes", command=yes_action,
+                          bg="#3a3f3f", fg="white", font=fonts["button_font"], bd=0, relief="flat", highlightthickness=0 ,width=12, height=2).pack(side="left", padx=10)
+                tk.Button(btn_frame, text="No", command=confirm_win.destroy,
+                          bg="#3a3f3f", fg="white", font=fonts["button_font"], bd=0, relief="flat", highlightthickness=0 ,width=12, height=2).pack(side="right", padx=10)
+
+        delete_icon = ImageTk.PhotoImage(Image.open("assets/icons/delete.png").resize((20,20)))
+        edit_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/edit.png").resize((20,20)))
+        lyrics_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/lyrics.png").resize((20,20)))
+        open_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/folder.png").resize((20,20)))
+        props_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/properties.png").resize((20,20)))
+        menu.add_command(label=" Delete Song", image=delete_icon, compound="left", command=confirm_delete)
+        menu.add_command(label=" Edit Metadata", image=edit_icon_img, compound="left", command=lambda: edit_metadata(card, mp3_path))
+        menu.add_command(label=" Song Lyric", image=lyrics_icon_img, compound="left", command=lambda: fetch_and_show_lyrics(mp3_path))
+        menu.add_command(label=" Open Location", image=open_icon_img, compound="left",command=lambda: open_location(mp3_path))
+        menu.add_command(label=" Properties", image=props_icon_img, compound="left", command=lambda: show_properties(mp3_path))
+        menu.delete_icon = delete_icon
+        menu.edit_icon_img = edit_icon_img
+        menu.lyrics_icon_img = lyrics_icon_img
+        menu.open_icon_img = open_icon_img
+        menu.props_icon_img = props_icon_img
+        menu.tk_popup(event.x_root, event.y_root)
+    root.after(200, delayed_popup)
+
+def fetch_and_show_lyrics(mp3_path):
+    global lyric_is_open
+    lyric_is_open = True
+
+    if mp3_path != song_files[current_index]:
+        popup("You can only see the lyrics of the song\n that's playing right now.",title="Lyrics")
+        return
+
+    if not is_connected():
+        popup("You are not connected to the internet.\nPlease check your connection and try again.", title="No Internet Connection")
+        return
+
+    title, artist, _, _ = get_song_info(mp3_path)
+
+    try:
+        song = genius.search_song(title, artist)
+    except Exception as e:
+        popup(f"Error: {str(e)}", "Error")
+        return
+
+    if not song or not song.lyrics:
+        popup("Lyrics for this song could not be found on Genius.", title="Lyrics Not Found")
+        return
+
+    lyrics_text = regex.sub(r'[^\p{L}\p{N}\s:.]', '', song.lyrics)
+
+    def process_multilang_text(text):
+        if any('\u0590' <= c <= '\u06FF' for c in text):
+            reshaped_text = arabic_reshaper.reshape(text)
+            final_text = get_display(reshaped_text)
+            align = "right"
+        else:
+            final_text = text
+            align = "left"
+        return final_text, align
+
+    def close_lyrics():
+        global lyric_is_open
+        lyric_is_open = False
+        win.destroy()
+
+    processed_text, align = process_multilang_text(lyrics_text)
+
+    win = tk.Toplevel(root)
+    win.overrideredirect(True)
+    win.configure(bg="#262b2b")
+    win.grab_set()
+
+    frame = tk.Frame(win, bg="#262b2b")
+    frame.pack(expand=True, fill="both")
+
+    text_widget = tk.Text(frame, bg="#262b2b", fg="white", font=fonts["title_font"], wrap="word",
+                          bd=0, highlightthickness=0)
+    text_widget.insert("1.0", processed_text)
+    text_widget.tag_configure("align", justify="center", spacing1=4, spacing3=4)
+    text_widget.tag_add("align", "1.0", "end")
+    text_widget.config(state="disabled")
+    text_widget.pack(expand=True, fill="both", padx=10, pady=(10,0))
+
+    close_btn = tk.Button(
+        frame,
+        text="Close",
+        font=fonts["button_font"],
+        bg="#3a3f3f",
+        fg="white",
+        bd=0,
+        relief="flat",
+        highlightthickness=0,
+        width=12,
+        height=2,
+        command=close_lyrics
+    )
+    close_btn.pack(side="bottom",pady=(0, 15))
+
+    win.update_idletasks()
+    width = text_widget.winfo_reqwidth() + 20
+    height = text_widget.winfo_reqheight() + close_btn.winfo_reqheight() + 30
+    x = root.winfo_x() + (root.winfo_width() // 2) - (width // 2)
+    y = root.winfo_y() + (root.winfo_height() // 2) - (height // 2)
+    win.geometry(f"{width}x{height}+{x}+{y}")
+
+    def start_move(event):
+        win.x = event.x
+        win.y = event.y
+
+    def do_move(event):
+        x = win.winfo_x() + (event.x - win.x)
+        y = win.winfo_y() + (event.y - win.y)
+        win.geometry(f"+{x}+{y}")
+
+    frame.bind("<Button-1>", start_move)
+    frame.bind("<B1-Motion>", do_move)
+    
+    lyrics_song_index = current_index
+    def check_lyrics_window():
+        global lyric_is_open
+        if current_index != lyrics_song_index:
+            try:
+                lyric_is_open = False
+                win.destroy()
+            except:
+                pass
+        else:
+            win.after(500, check_lyrics_window)
+    check_lyrics_window()
+
+def show_properties(mp3_path):
+    audio = MP3(mp3_path, ID3=ID3)
+
+    title_tag = audio.tags.get("TIT2")
+    artist_tag = audio.tags.get("TPE1")
+    album_tag = audio.tags.get("TALB")
+    genre_tag = audio.tags.get("TCON")
+    date_tag = audio.tags.get("TDRC")
+    track_tag = audio.tags.get("TRCK")
+    comment_tag = audio.tags.get("COMM")
+    composer_tag = audio.tags.get("TCOM")
+    album_artist_tag = audio.tags.get("TPE2")
+    size_bytes = os.path.getsize(mp3_path)
+
+    title = title_tag.text[0] if title_tag else os.path.basename(mp3_path)
+    artist = artist_tag.text[0] if artist_tag else "Unknown"
+    album = album_tag.text[0] if album_tag else "Unknown"
+    genre = genre_tag.text[0] if genre_tag else "Unknown"
+    recording_date = str(date_tag.text[0]) if date_tag else "Unknown"
+    track = track_tag.text[0] if track_tag else "Unknown"
+    comment = comment_tag.text[0] if comment_tag else "Unknown"
+    composer = composer_tag.text[0] if composer_tag else "Unknown"
+    album_artist = album_artist_tag.text[0] if album_artist_tag else "Unknown"
+    size_mb = f"{size_bytes / (1024*1024):.2f} MB"
+    
+    props_win = tk.Toplevel(root)
+    props_win.configure(bg="#262b2b")
+    props_win.title("Properties")
+    props_win.resizable(0, 0)
+    props_win.overrideredirect(True)
+    props_win.grab_set()
+
+    labels = [
+        ("Title", title),
+        ("Artist", artist),
+        ("Album", album),
+        ("Genre", genre),
+        ("Date", recording_date),
+        ("Track", track),
+        ("Comment", comment),
+        ("Composer", composer),
+        ("Album Artist", album_artist),
+        ("Size", size_mb)
+    ]
+
+    frame = tk.Frame(props_win, bg="#262b2b", bd=2, highlightbackground="black", highlightthickness=2)
+    frame.pack(expand=True, fill="both")
+
+    for i, (label, value) in enumerate(labels):
+        row = tk.Frame(frame, bg="#262b2b")
+        row.pack(fill="x", padx=10, pady=(5 if i == 0 else 2))
+        tk.Label(row, text=f"{label}:", fg="white", bg="#262b2b", font=("Agave Nerd Font Propo", 12, "bold"), anchor="w").pack(side="left")
+        tk.Label(row, text=value, fg="white", bg="#262b2b", font=("Agave Nerd Font Propo", 12, "normal"), anchor="w").pack(side="left", padx=(5,0))
+
+    tk.Button(frame, text="Close", command=props_win.destroy, bg="#3a3f3f", fg="white",
+              font=("Agave Nerd Font Propo", 12), width=12, bd=0, relief="flat",
+              highlightthickness=0).pack(pady=10)
+
+    props_win.update_idletasks()
+    width = props_win.winfo_width()
+    height = props_win.winfo_height()
+    x = root.winfo_x() + (root.winfo_width() // 2) - (width // 2)
+    y = root.winfo_y() + (root.winfo_height() // 2) - (height // 2)
+    props_win.geometry(f"+{x}+{y}")
+def album_card(parent, mp3_path, song_index):
+    title, artist, cover_data, length = get_song_info(mp3_path)
+    card = tk.Frame(parent, bg="#2b3030", width=180, height=240)
+    card_widgets.append((card, mp3_path, song_index))
+    
+    card.is_favorite = False
+
+    if cover_data:
+        cover_img = Image.open(io.BytesIO(cover_data))
+    else:
+        cover_img = Image.new("RGB", (160, 140), color="#444")
+    cover_img = cover_img.resize((160, 140))
+    img = ImageTk.PhotoImage(cover_img)
+    cover = tk.Label(card, image=img, bg="#2b3030", bd=0, highlightthickness=0)
+    cover.image = img
+    cover.pack(pady=10)
+
+    max_chars = 20
+
+    if len(title) > max_chars:
+        display_title = title[:max_chars-3] + "..."
+    else:
+        display_title = title
+    if len(artist) > max_chars:
+        display_artist = artist[:max_chars-3] + "..."
+    else:
+        display_artist = artist
+
+    tk.Label(card, text=display_title, fg="white", bg="#2b3030",
+            font=fonts["title_font"], anchor="w").pack(fill="x", padx=10)
+    tk.Label(card, text=display_artist, fg="#a0a0a0", bg="#2b3030",
+            font=fonts["artist_font"], anchor="w").pack(fill="x", padx=10)
+
+    total_time = f"{int(length//60)}:{int(length%60):02d}"
+    time_label = tk.Label(card, text=total_time, fg="white", bg="#2b3030", font=fonts["artist_font"])
+    time_label.place(x=10, y=card.winfo_reqheight()-25)
+
+    heart_empty = ImageTk.PhotoImage(Image.open("assets/icons/heart_empty.png").resize((20,20)))
+    heart_filled = ImageTk.PhotoImage(Image.open("assets/icons/heart_filled.png").resize((20,20)))
+    card.heart_empty = heart_empty
+    card.heart_filled = heart_filled
+    heart_label = tk.Label(card, image=heart_empty, bg="#2b3030", bd=0)
+    heart_label.pack(side="bottom", pady=5)
+    card.heart_label = heart_label
+    search_cache[mp3_path] = {
+        "title": title.lower(),
+        "artist": artist.lower()
+    }
+    def toggle_favorite(event=None):
+        card.is_favorite = not card.is_favorite
+        heart_label.config(image=heart_filled if card.is_favorite else heart_empty)
+    
+    heart_label.bind("<Button-1>", toggle_favorite)
+
+    dots_icon_img = ImageTk.PhotoImage(Image.open("assets/icons/three_dots.png").resize((20,20)))
+    three_dot_label = tk.Label(card, image=dots_icon_img, bg="#2b3030", bd=0)
+    three_dot_label.image = dots_icon_img
+    three_dot_label.place(x=card.winfo_reqwidth()-30, y=card.winfo_reqheight()-25)
+    three_dot_label.bind("<Button-1>", lambda e: show_menu(e, card, mp3_path))
+
+    card.bind("<Button-1>", lambda e, p=mp3_path: play_song_by_path(p))
+    cover.bind("<Button-1>", lambda e, p=mp3_path: play_song_by_path(p))
+    card.pack(side="left", padx=10)
+    card.pack_propagate(False)
+
+def show_all_songs():
+    if not card_widgets:
+        return
+
+    global active_playlist, current_playlist_index
+    active_playlist = [mp3 for c, mp3, idx in card_widgets]
+    current_playlist_index = 0
+    library_label.config(text="Library")
+    library_icon.config(image=library_icon_img)
+
+    for card, mp3, idx in card_widgets:
+        card.pack_forget()
+    for card, mp3, idx in sorted(card_widgets, key=lambda x: x[2]):
+        card.pack(side="left", padx=10)
+    update_scrollregion()
+
+def show_favorites():
+    global active_playlist, current_playlist_index
+    if not card_widgets:
+        return
+
+    active_playlist = [
+        mp3 for card, mp3, idx in card_widgets
+        if getattr(card, "is_favorite", False)
+    ]
+    current_playlist_index = 0
+    library_label.config(text="Favorites")
+    library_icon.config(image=heart_empty_icon_img)
+
+    for card, mp3, idx in card_widgets:
+        card.pack_forget()
+    for card, mp3, idx in sorted(card_widgets, key=lambda x: x[2]):
+        if getattr(card, "is_favorite", False):
+            card.pack(side="left", padx=10)
+    update_scrollregion()
+
+all_songs_icon = ImageTk.PhotoImage(Image.open("assets/icons/library.png").resize((20,20)))
+favorites_icon = ImageTk.PhotoImage(Image.open("assets/icons/heart_empty.png").resize((20,20)))
+library_menu = tk.Menu(root, tearoff=0, bg="#2b3030", fg="white",
+                       font=("Agave Nerd Font Propo", 12), bd=0, relief="flat")
+library_menu.add_command(label="Library", image=all_songs_icon, compound="left",
+                         command=show_all_songs)
+library_menu.add_command(label="Favorites", image=favorites_icon, compound="left",
+                         command=show_favorites)
+library_menu.all_songs_icon = all_songs_icon
+library_menu.favorites_icon = favorites_icon
+
+def library_click(event):
+    def delayed_menu():
+        library_menu.tk_popup(event.x_root, event.y_root)
+    root.after(200, delayed_menu)
+
+library_label.bind("<Button-1>", library_click)
+library_icon.bind("<Button-1>", library_click)
+for i, mp3 in enumerate(song_files):
+    album_card(albums_frame, mp3, i)
+load_favorites()
+
+# ---------- INITIALIZE FIRST SONG DISPLAY ----------
+if song_files:  
+    first_title, first_artist, _, _ = get_song_info(song_files[0])
+    set_song_title(first_title)
+    set_song_artist(first_artist)
+
+# ---------- DEFAULT COVER FROM FIRST SONG ----------
+if song_files:
+    first_cover_data = get_song_info(song_files[0])[2]
+    if first_cover_data:
+        cover_img = Image.open(io.BytesIO(first_cover_data))
+    else:
+        cover_img = Image.new("RGB", (60, 60), color="#444")
+    cover_img = cover_img.resize((60, 60))
+    first_cover_photo = ImageTk.PhotoImage(cover_img)
+    cover_label.config(image=first_cover_photo)
+    cover_label.image = first_cover_photo
+
+update_progress()
+try:
+    root.mainloop()
+except KeyboardInterrupt:
+    sys.exit()
