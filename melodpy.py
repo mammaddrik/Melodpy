@@ -747,9 +747,10 @@ def edit_metadata(card, path):
                     audio.tags.add(mutagen.id3.COMM(encoding=3, lang="eng", text=var.get()))
                 else:
                     audio.tags.add(getattr(mutagen.id3, tname)(encoding=3, text=var.get()))
-            if hasattr(cover_label, "new_cover_path"):
-                with open(cover_label.new_cover_path, "rb") as f:
-                    audio.tags.add(mutagen.id3.APIC(encoding=3, mime="image/jpeg", type=3, desc="Cover", data=f.read()))
+                if hasattr(cover_label, "new_cover_path"):
+                    audio.tags.delall("APIC")
+                    with open(cover_label.new_cover_path, "rb") as f:
+                        audio.tags.add(mutagen.id3.APIC(encoding=3, mime="image/jpeg", type=3, desc="Cover", data=f.read()))
                 new_cover_img = Image.open(cover_label.new_cover_path).resize((60, 60))
                 new_cover_photo = ImageTk.PhotoImage(new_cover_img)
                 cover_label_main = globals()['cover_label']
