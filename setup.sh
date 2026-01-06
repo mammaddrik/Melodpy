@@ -51,9 +51,9 @@ chmod +x /usr/local/sbin/Melodpy.py
 chmod +x Melodpy.py
 
 echo -e "[${GREEN}✔${RESET}]Done"
-echo -e "${GREEN} ╔───────────────────────────────╗${RESET}"
+echo -e "${GREEN} ╔───────────────────────────╗${RESET}"
 echo -e "${GREEN} | ${BLUE}Run in Terminal (Melodpy) ${GREEN}|${RESET}"
-echo -e "${GREEN} ╚───────────────────────────────╝${RESET}"
+echo -e "${GREEN} ╚───────────────────────────╝${RESET}"
 exit
 
 trap ctrl_c INT
