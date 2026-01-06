@@ -57,16 +57,6 @@ cd Melodpy
 python pip install -r requirements.txt
 python Melodpy.py
 ```
-Or you can install it:
-```
-git clone https://github.com/mammaddrik/Melodpy.git
-cd Melodpy
-python pip install -r requirements.txt
-sudo chmod +x setup.sh
-sudo bash setup.sh
-Melodpy
-```
-> **Note:** If you get a permission denied error, use this comment: `bash Melodpy`<br>
 
 ### requirements
 | **Requirements**  | **Command**  | **Link**  | **Version**  |
