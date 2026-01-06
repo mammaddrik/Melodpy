@@ -12,7 +12,7 @@ It focuses on simplicity, local music libraries, and a clean user experience.
 
 [Features](#Features)<br>
 [Installation](#installation)<br>
-[Screenshots](#Screenshots)
+[Screenshots](#Screenshots)<br>
 [License](#license)
 
 </details>
@@ -34,8 +34,6 @@ It focuses on simplicity, local music libraries, and a clean user experience.
 
 ## Installation
 
-## Screenshots
-
 ### requirements
 | **Requirements**  | **Command**  | **Link**  | **Version**  |
 | ------------- | ------------- | ------------- | ------------- |
@@ -46,7 +44,9 @@ python -m pip install --upgrade pip
 python pip install -r requirements.txt
 ```
 
+## Screenshots
+
 ## License
-Christopher is licensed under [MIT License](https://github.com/mammaddrik/Melodpy/blob/main/LICENSE).
+Melodpy is licensed under [MIT License](https://github.com/mammaddrik/Melodpy/blob/main/LICENSE).
 
 <p align="right"><a href="#top">back to top</a></p>
