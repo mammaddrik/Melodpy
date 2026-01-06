@@ -1,20 +1,17 @@
 <div id="top"></div>
 <h1 align="center">
-    <a href="https://github.com/mammaddrik/Melodpy"><img src="https://i.postimg.cc/BvCVmTmK/melodpy.png" alt="christopher logo"></a>
-    <br>
-    Melodpy
+    <a href="https://github.com/mammaddrik/Melodpy"><img src="https://i.postimg.cc/BvCVmTmK/melodpy.png" alt="Melodpy logo"></a>
 </h1>
 
-<h3 align="center">Music Player</h3>
-
-# 🎵 Melodpy
-
+# Melodpy
 Melodpy is a lightweight desktop music player built with Python, Tkinter, and pygame.  
 It focuses on simplicity, local music libraries, and a clean user experience.
 
----
+<p align="center">
+    <img src="https://i.postimg.cc/HxZLqPpf/musicplayer.png">
+</p>
 
-## ✨ Features
+## Features
 
 - 🎧 Play local MP3 files
 - 📁 Load music from any folder
