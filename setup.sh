@@ -38,7 +38,7 @@ func_title
 mkdir -p /usr/share/Melodpy
 cp setup.sh /usr/share/Melodpy
 cp melodpy.py /usr/share/Melodpy
-cp -r detect/ lib/ src/ /usr/share/Melodpy
+cp -r assets/ font/ /usr/share/Melodpy
 
 echo "#!/bin/sh" >> /usr/bin/Melodpy
 echo "cd /usr/share/Melodpy" >> /usr/bin/Melodpy
@@ -46,7 +46,7 @@ echo "exec python melodpy.py \"\$@\"" >> /usr/bin/Melodpy
 cp $path/logo/Melodpy.desktop /usr/share/applications/Melodpy.desktop
 cp $path/logo/Melodpy.png /usr/share/icons/Melodpy.png
 cp melodpy.py /usr/local/sbin/melodpy.py
-cp -r detect/ lib/ src/ /usr/local/sbin
+cp -r assets/ font/ /usr/local/sbin
 chmod +x /usr/local/sbin/melodpy.py
 chmod +x melodpy.py
 
