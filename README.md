@@ -7,6 +7,15 @@
 # Melodpy
 Melodpy is a lightweight desktop music player built with Python, Tkinter, and pygame.  
 It focuses on simplicity, local music libraries, and a clean user experience.
+<details>
+<summary>Contents</summary>
+
+[Features](#Features)<br>
+[Installation](#installation)<br>
+[Screenshots](#Screenshots)
+[License](#license)
+
+</details>
 
 <p align="center">
     <img src="https://i.postimg.cc/HxZLqPpf/musicplayer.png" alt="Music Player">
@@ -23,8 +32,19 @@ It focuses on simplicity, local music libraries, and a clean user experience.
 - 🎶 Fetch lyrics from Genius (optional)
 - 🌍 Supports multilingual lyrics (LTR & RTL)
 
-## 🖥 Screenshots
+## Installation
 
+## Screenshots
+
+### requirements
+| **Requirements**  | **Command**  | **Link**  | **Version**  |
+| ------------- | ------------- | ------------- | ------------- |
+| pygame  | `python pip install pygame`  | [pypi](https://pypi.org/project/pygame/)  | 2.6.1  |
+> **Note:** You may encounter an error while installing this requirements. If an error occurs, use the following command.
+```
+python -m pip install --upgrade pip
+python pip install -r requirements.txt
+```
 
 ## License
 Christopher is licensed under [MIT License](https://github.com/mammaddrik/Melodpy/blob/main/LICENSE).
