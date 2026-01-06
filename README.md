@@ -37,7 +37,12 @@ It focuses on simplicity, local music libraries, and a clean user experience.
 ### requirements
 | **Requirements**  | **Command**  | **Link**  | **Version**  |
 | ------------- | ------------- | ------------- | ------------- |
-| pygame  | `python pip install pygame`  | [pypi](https://pypi.org/project/pygame/)  | 2.6.1  |
+| pillow | `python pip install pillow`  | [pypi](https://pypi.org/project/pillow/)  | 12.1.0 |
+| mutagen | `python pip install mutagen` | [pypi](https://pypi.org/project/mutagen/)  | 1.47.0 |
+| pygame | `python pip install pygame`  | [pypi](https://pypi.org/project/pygame/)  | 2.6.1 |
+| lyricsgenius | `python pip install lyricsgenius`  | [pypi](https://pypi.org/project/lyricsgenius/)  | 3.7.5 |
+| arabic-reshaper | `python pip install arabic-reshaper`  | [pypi](https://pypi.org/project/arabic-reshaper/)  | 3.0.0 |
+| python-bidi | `python pip install python-bidi`  | [pypi](https://pypi.org/project/python-bidi/)  | 0.6.7 |
 > **Note:** You may encounter an error while installing this requirements. If an error occurs, use the following command.
 ```
 python -m pip install --upgrade pip
