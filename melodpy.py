@@ -30,7 +30,7 @@ except ImportError:
 
 #::::: Default Library :::::
 import tkinter as tk
-from tkinter import font as tkfont, messagebox, filedialog
+from tkinter import messagebox, filedialog
 import os
 import io
 import contextlib
@@ -42,18 +42,6 @@ import webbrowser
 
 #::::: Fonts :::::
 from font.font import create_fonts
-
-#::::: Genius :::::
-with open("token.txt") as f:
-    token = f.read()
-GENIUS_TOKEN = token
-
-genius = Genius(
-    GENIUS_TOKEN,
-    timeout=10,
-    retries=1,
-    remove_section_headers=True
-)
 
 #::::: Melodpy :::::
 root = tk.Tk()
@@ -69,7 +57,6 @@ fonts = create_fonts(root)
 # root.resizable(0, 0)
 pygame.mixer.init()
 
-#:::::  :::::
 song_files = []
 active_playlist = []
 current_playlist_index = 0
@@ -185,6 +172,18 @@ def popup(message, title="Info", width = 400, height = 140):
     tk.Label(frame, text=title, fg="white", bg="#262b2b", font=fonts["info_title"]).pack(pady=(15, 5))
     tk.Label(frame, text=message, fg="white", bg="#262b2b", font=fonts["message"], anchor="center").pack(pady=(0, 10))
     tk.Button(frame, text="Close", command=popup.destroy, bg="#3a3f3f", fg="white", font=fonts["button_font"], bd=0, relief="flat", highlightthickness=0, width=12, height=2).pack(pady=(0, 15))
+
+#::::: Genius :::::
+with open("token.txt") as f:
+    token = f.read()
+GENIUS_TOKEN = token
+
+genius = Genius(
+    GENIUS_TOKEN,
+    timeout=10,
+    retries=1,
+    remove_section_headers=True
+)
 
 #::::: Open Github :::::
 def open_github(event=None):
@@ -543,7 +542,7 @@ def toggle_loop():
     is_loop = not is_loop
     loop_btn.config(image=loop_icon_on if is_loop else loop_icon_off)
 
-# ---------- ICONS ----------
+#::::: Icons :::::
 play_icon = ImageTk.PhotoImage(Image.open("assets/icons/play.png").resize((30,30)))
 pause_icon = ImageTk.PhotoImage(Image.open("assets/icons/pause.png").resize((30,30)))
 next_icon = ImageTk.PhotoImage(Image.open("assets/icons/next.png").resize((30,30)))
@@ -662,7 +661,7 @@ def delete_song(card, path):
 
 def edit_metadata(card, path):
     if path == song_files[current_index]:
-        # Popup
+        popup("Unable to edit the song's metadata.\nCannot edit the metadata of the selected song.", title="Cannot Edit")
         return
 
     audio = MP3(path, ID3=ID3)
@@ -772,8 +771,8 @@ def edit_metadata(card, path):
             }
             win.destroy()
 
-    tk.Button(btn_frame, text="Save", bg="#3a3f3f", fg="white", font=fonts["button_font"], width=12, bd=0, relief="flat", highlightthickness=0, command=save_changes).pack(side="left", padx=10)
-    tk.Button(btn_frame, text="Cancel", bg="#3a3f3f", fg="white", font=fonts["button_font"], width=12, bd=0, relief="flat", highlightthickness=0, command=win.destroy).pack(side="left", padx=10)
+    tk.Button(btn_frame, text="Save", bg="#3a3f3f", fg="white", font=fonts["button_font"], width=12, height=2, bd=0, relief="flat", highlightthickness=0, command=save_changes).pack(side="left", padx=10)
+    tk.Button(btn_frame, text="Cancel", bg="#3a3f3f", fg="white", font=fonts["button_font"], width=12, height=2, bd=0, relief="flat", highlightthickness=0, command=win.destroy).pack(side="left", padx=10)
 
 def open_location(path):
     try:
@@ -870,7 +869,7 @@ def fetch_and_show_lyrics(mp3_path):
         return
 
     if not song or not song.lyrics:
-        popup("Lyrics for this song could not be found on Genius.", title="Lyrics Not Found")
+        popup("Lyrics not be found on Genius.\nYou should check the metadata.", title="Lyrics Not Found")
         return
 
     lyrics_text = regex.sub(r'[^\p{L}\p{N}\s:.]', '', song.lyrics)
@@ -908,19 +907,8 @@ def fetch_and_show_lyrics(mp3_path):
     text_widget.config(state="disabled")
     text_widget.pack(expand=True, fill="both", padx=10, pady=(10,0))
 
-    close_btn = tk.Button(
-        frame,
-        text="Close",
-        font=fonts["button_font"],
-        bg="#3a3f3f",
-        fg="white",
-        bd=0,
-        relief="flat",
-        highlightthickness=0,
-        width=12,
-        height=2,
-        command=close_lyrics
-    )
+    close_btn = tk.Button(frame, text="Close", font=fonts["button_font"], bg="#3a3f3f", fg="white", bd=0,
+        relief="flat",highlightthickness=0, width=12,height=2,command=close_lyrics)
     close_btn.pack(side="bottom",pady=(0, 15))
 
     win.update_idletasks()
@@ -1000,18 +988,17 @@ def show_properties(mp3_path):
         ("Size", size_mb)
     ]
 
-    frame = tk.Frame(props_win, bg="#262b2b", bd=2, highlightbackground="black", highlightthickness=2)
+    frame = tk.Frame(props_win, bg="#262b2b", bd=2)
     frame.pack(expand=True, fill="both")
 
     for i, (label, value) in enumerate(labels):
         row = tk.Frame(frame, bg="#262b2b")
         row.pack(fill="x", padx=10, pady=(5 if i == 0 else 2))
-        tk.Label(row, text=f"{label}:", fg="white", bg="#262b2b", font=("Agave Nerd Font Propo", 12, "bold"), anchor="w").pack(side="left")
-        tk.Label(row, text=value, fg="white", bg="#262b2b", font=("Agave Nerd Font Propo", 12, "normal"), anchor="w").pack(side="left", padx=(5,0))
+        tk.Label(row, text=f"{label}:", fg="white", bg="#262b2b", font=fonts["title_font"], anchor="w").pack(side="left")
+        tk.Label(row, text=value, fg="white", bg="#262b2b", font=fonts["message"], anchor="w").pack(side="left", padx=(5,0))
 
     tk.Button(frame, text="Close", command=props_win.destroy, bg="#3a3f3f", fg="white",
-              font=("Agave Nerd Font Propo", 12), width=12, bd=0, relief="flat",
-              highlightthickness=0).pack(pady=10)
+              font=fonts["button_font"], width=12, height=2,bd=0, relief="flat",highlightthickness=0).pack(pady=10)
 
     props_win.update_idletasks()
     width = props_win.winfo_width()
@@ -1123,7 +1110,7 @@ def show_favorites():
 all_songs_icon = ImageTk.PhotoImage(Image.open("assets/icons/library.png").resize((20,20)))
 favorites_icon = ImageTk.PhotoImage(Image.open("assets/icons/heart_empty.png").resize((20,20)))
 library_menu = tk.Menu(root, tearoff=0, bg="#2b3030", fg="white",
-                       font=("Agave Nerd Font Propo", 12), bd=0, relief="flat")
+                       font=fonts["header_font"], bd=0, relief="flat")
 library_menu.add_command(label="Library", image=all_songs_icon, compound="left",
                          command=show_all_songs)
 library_menu.add_command(label="Favorites", image=favorites_icon, compound="left",
@@ -1141,24 +1128,6 @@ library_icon.bind("<Button-1>", library_click)
 for i, mp3 in enumerate(song_files):
     album_card(albums_frame, mp3, i)
 load_favorites()
-
-# ---------- INITIALIZE FIRST SONG DISPLAY ----------
-if song_files:  
-    first_title, first_artist, _, _ = get_song_info(song_files[0])
-    set_song_title(first_title)
-    set_song_artist(first_artist)
-
-# ---------- DEFAULT COVER FROM FIRST SONG ----------
-if song_files:
-    first_cover_data = get_song_info(song_files[0])[2]
-    if first_cover_data:
-        cover_img = Image.open(io.BytesIO(first_cover_data))
-    else:
-        cover_img = Image.new("RGB", (60, 60), color="#444")
-    cover_img = cover_img.resize((60, 60))
-    first_cover_photo = ImageTk.PhotoImage(cover_img)
-    cover_label.config(image=first_cover_photo)
-    cover_label.image = first_cover_photo
 
 update_progress()
 try:
