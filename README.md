@@ -33,6 +33,40 @@ It focuses on simplicity, local music libraries, and a clean user experience.
 - 🌍 Supports multilingual lyrics (LTR & RTL)
 
 ## Installation
+### <img src="https://i.postimg.cc/nLp4jWx0/Windows.png" width="15" height="15" alt="Windows"/> Windows
+> **Note:** Melodpy isn't compatible with python2, run it with python3 instead.<br>
+```
+git clone https://github.com/mammaddrik/Melodpy.git
+cd Melodpy
+python pip install -r requirements.txt
+python Melodpy.py
+```
+Or you can use exe file on [releases](https://github.com/mammaddrik/Melodpy/releases).
+
+### <img src="https://cdn.simpleicons.org/docker/2496ED" width="15" height="15" alt="docker"/> Docker
+install docker on your system. [docker](https://www.docker.com/)
+```
+docker build -t Melodpy .
+docker run -ti Melodpy
+```
+### <img src="https://raw.githubusercontent.com/danielcranney/readme-generator/main/public/icons/skills/linux-colored.svg" width="15" height="15" alt="Linux"/> Linux
+> **Note:** Melodpy isn't compatible with python2, run it with python3 instead.<br>
+```
+git clone https://github.com/mammaddrik/Melodpy.git
+cd Melodpy
+python pip install -r requirements.txt
+python Melodpy.py
+```
+Or you can install it:
+```
+git clone https://github.com/mammaddrik/Melodpy.git
+cd Melodpy
+python pip install -r requirements.txt
+sudo chmod +x setup.sh
+sudo bash setup.sh
+Melodpy
+```
+> **Note:** If you get a permission denied error, use this comment: `bash Melodpy`<br>
 
 ### requirements
 | **Requirements**  | **Command**  | **Link**  | **Version**  |
@@ -44,6 +78,7 @@ It focuses on simplicity, local music libraries, and a clean user experience.
 | arabic-reshaper | `python pip install arabic-reshaper`  | [pypi](https://pypi.org/project/arabic-reshaper/)  | 3.0.0 |
 | python-bidi | `python pip install python-bidi`  | [pypi](https://pypi.org/project/python-bidi/)  | 0.6.7 |
 > **Note:** You may encounter an error while installing this requirements. If an error occurs, use the following command.
+
 ```
 python -m pip install --upgrade pip
 python pip install -r requirements.txt
