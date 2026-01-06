@@ -173,18 +173,6 @@ def popup(message, title="Info", width = 400, height = 140):
     tk.Label(frame, text=message, fg="white", bg="#262b2b", font=fonts["message"], anchor="center").pack(pady=(0, 10))
     tk.Button(frame, text="Close", command=popup.destroy, bg="#3a3f3f", fg="white", font=fonts["button_font"], bd=0, relief="flat", highlightthickness=0, width=12, height=2).pack(pady=(0, 15))
 
-#::::: Genius :::::
-with open("token.txt") as f:
-    token = f.read()
-GENIUS_TOKEN = token
-
-genius = Genius(
-    GENIUS_TOKEN,
-    timeout=10,
-    retries=1,
-    remove_section_headers=True
-)
-
 #::::: Open Github :::::
 def open_github(event=None):
     if not is_connected():
@@ -196,6 +184,32 @@ def open_github(event=None):
         popup(f"Cannot open browser:\n{e}", title="Error")
 title.bind("<Double-Button-1>", open_github)
 title.config(cursor="hand2")
+
+def get_genius_client():
+    if not is_connected():
+        popup("You are not connected to the internet.\nPlease check your connection.", title="No Internet Connection")
+        return None
+
+    if not os.path.exists("token.txt"):
+        popup("token.txt file not found.\nLyrics feature is disabled.", title="Missing Token")
+        return None
+
+    try:
+        with open("token.txt", "r", encoding="utf-8") as f:
+            token = f.read().strip()
+    except Exception as e:
+        popup(f"Failed to read token.txt:\n{e}", title="Token Error")
+        return None
+
+    if not token:
+        popup("token.txt file is empty.\nPlease put your Genius API token inside it.", title="Invalid Token")
+        return None
+
+    try:
+        return Genius(token, timeout=10, retries=1, remove_section_headers=True)
+    except Exception as e:
+        popup(f"Failed to initialize Genius:\n{e}", title="Genius Error")
+        return None
 
 #::::: Main :::::
 main = tk.Frame(root, bg="#1f2323")
@@ -537,11 +551,6 @@ def choose_folder():
     if song_files:
         play_song(0)
 
-def toggle_loop():
-    global is_loop
-    is_loop = not is_loop
-    loop_btn.config(image=loop_icon_on if is_loop else loop_icon_off)
-
 #::::: Icons :::::
 play_icon = ImageTk.PhotoImage(Image.open("assets/icons/play.png").resize((30,30)))
 pause_icon = ImageTk.PhotoImage(Image.open("assets/icons/pause.png").resize((30,30)))
@@ -856,8 +865,8 @@ def fetch_and_show_lyrics(mp3_path):
         popup("You can only see the lyrics of the song\n that's playing right now.",title="Lyrics")
         return
 
-    if not is_connected():
-        popup("You are not connected to the internet.\nPlease check your connection and try again.", title="No Internet Connection")
+    genius = get_genius_client()
+    if not genius:
         return
 
     title, artist, _, _ = get_song_info(mp3_path)
@@ -865,11 +874,11 @@ def fetch_and_show_lyrics(mp3_path):
     try:
         song = genius.search_song(title, artist)
     except Exception as e:
-        popup(f"Error: {str(e)}", "Error")
+        popup(f"Failed to fetch lyrics from Genius.\nPlease check the token.", title="Lyrics Error")
         return
 
     if not song or not song.lyrics:
-        popup("Lyrics not be found on Genius.\nYou should check the metadata.", title="Lyrics Not Found")
+        popup("Lyrics were not found.\nCheck the song metadata.", title="Lyrics Not Found")
         return
 
     lyrics_text = regex.sub(r'[^\p{L}\p{N}\s:.]', '', song.lyrics)
