@@ -7,16 +7,6 @@
 # Melodpy
 Melodpy is a lightweight desktop music player built with Python, Tkinter, and pygame.  
 It focuses on simplicity, local music libraries, and a clean user experience.
-<details>
-<summary>Contents</summary>
-
-[Features](#Features)<br>
-[Installation](#installation)<br>
-[Screenshots](#Screenshots)<br>
-[GeniusAPI](#GeniusAPIToken)<br>
-[License](#license)
-
-</details>
 
 <p align="center">
     <img src="https://i.postimg.cc/HxZLqPpf/musicplayer.png" alt="Music Player">
