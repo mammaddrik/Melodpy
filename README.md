@@ -13,6 +13,7 @@ It focuses on simplicity, local music libraries, and a clean user experience.
 [Features](#Features)<br>
 [Installation](#installation)<br>
 [Screenshots](#Screenshots)<br>
+[GeniusAPI](#GeniusAPI)<br>
 [License](#license)
 
 </details>
@@ -73,6 +74,25 @@ python Melodpy.py
 python -m pip install --upgrade pip
 python pip install -r requirements.txt
 ```
+
+## Genius API Token
+This project uses the Genius API to fetch song lyrics. How to set up the token Get a Genius access token from [Geniys](https://genius.com/developers)
+Create a file named `token.txt` in the repositorie of the project.
+Paste your access token inside the file.
+```
+Melodpy/
+├── assets/
+├── font/
+├── logo/
+├── requirements.txt
+├── token.txt
+├── main.py
+└── README.md
+```
+
+> **Note:** The file must contain only the token (no quotes, no extra lines).
+
+The python automatically reads the token at startup.
 
 ## Screenshots
 <p align="center">
