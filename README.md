@@ -75,7 +75,7 @@ Melodpy/
 ├── logo/
 ├── requirements.txt
 ├── token.txt
-├── main.py
+├── melodpy.py
 └── README.md
 ```
 
