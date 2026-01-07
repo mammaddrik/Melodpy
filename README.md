@@ -1,8 +1,8 @@
 <div id="top"></div>
-<o align="center">
+<p align="center">
     <a href="https://github.com/mammaddrik/Melodpy">
     <img src="https://i.postimg.cc/RFW74jn0/Melodpy.png" alt="Melodpy logo"></a>
-</o>
+</p>
 
 # Melodpy
 Melodpy is a lightweight desktop music player built with Python, Tkinter, and pygame.  
@@ -75,6 +75,10 @@ python pip install -r requirements.txt
 ```
 
 ## Screenshots
+<p align="center">
+    <img src="https://i.postimg.cc/hPtdnFWR/lyrics.png" alt="lyrics">
+    <img src="https://i.postimg.cc/4d1YCPW6/Favorite.png" alt="Favorite">
+</p>
 
 ## License
 Melodpy is licensed under [MIT License](https://github.com/mammaddrik/Melodpy/blob/main/LICENSE).
