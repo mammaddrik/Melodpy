@@ -13,7 +13,7 @@ It focuses on simplicity, local music libraries, and a clean user experience.
 [Features](#Features)<br>
 [Installation](#installation)<br>
 [Screenshots](#Screenshots)<br>
-[GeniusAPI](#GeniusAPI)<br>
+[GeniusAPI](#GeniusAPIToken)<br>
 [License](#license)
 
 </details>
