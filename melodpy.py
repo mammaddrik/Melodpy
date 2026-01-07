@@ -14,6 +14,18 @@
 #                            Music Player                            
 #                         Github: mammaddrik                         
 
+#::::: Default Library :::::
+import tkinter as tk
+from tkinter import messagebox, filedialog
+import os
+import io
+import contextlib
+import subprocess
+import sys
+import json
+import socket
+import webbrowser
+
 #::::: Libraries to be installed :::::
 try:
     import pygame
@@ -26,19 +38,7 @@ try:
     from bidi.algorithm import get_display
     from PIL import Image, ImageTk
 except ImportError:
-    os.system("pip install -r requirements.txt")
-
-#::::: Default Library :::::
-import tkinter as tk
-from tkinter import messagebox, filedialog
-import os
-import io
-import contextlib
-import subprocess
-import sys
-import json
-import socket
-import webbrowser
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
 
 #::::: Fonts :::::
 from font.font import create_fonts
