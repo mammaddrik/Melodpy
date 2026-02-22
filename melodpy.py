@@ -751,18 +751,19 @@ def edit_metadata(card, path):
                     audio.tags.delall("APIC")
                     with open(cover_label.new_cover_path, "rb") as f:
                         audio.tags.add(mutagen.id3.APIC(encoding=3, mime="image/jpeg", type=3, desc="Cover", data=f.read()))
-                new_cover_img = Image.open(cover_label.new_cover_path).resize((60, 60))
-                new_cover_photo = ImageTk.PhotoImage(new_cover_img)
-                cover_label_main = globals()['cover_label']
-                cover_label_main.config(image=new_cover_photo)
-                cover_label_main.image = new_cover_photo
-                card_widgets_dict = {mp3: c for c, mp3, idx in card_widgets}
-                current_card = card_widgets_dict[path]
-                new_card_cover_img = Image.open(cover_label.new_cover_path).resize((160, 140))
-                new_card_photo = ImageTk.PhotoImage(new_card_cover_img)
-                card_cover_label = current_card.winfo_children()[0]
-                card_cover_label.config(image=new_card_photo)
-                card_cover_label.image = new_card_photo
+                if hasattr(cover_label, "new_cover_path"):
+                    new_cover_img = Image.open(cover_label.new_cover_path).resize((60, 60))
+                    new_cover_photo = ImageTk.PhotoImage(new_cover_img)
+                    cover_label_main = globals()['cover_label']
+                    cover_label_main.config(image=new_cover_photo)
+                    cover_label_main.image = new_cover_photo
+                    card_widgets_dict = {mp3: c for c, mp3, idx in card_widgets}
+                    current_card = card_widgets_dict[path]
+                    new_card_cover_img = Image.open(cover_label.new_cover_path).resize((160, 140))
+                    new_card_photo = ImageTk.PhotoImage(new_card_cover_img)
+                    card_cover_label = current_card.winfo_children()[0]
+                    card_cover_label.config(image=new_card_photo)
+                    card_cover_label.image = new_card_photo
             audio.save()
 
             card_widgets_dict = {mp3: c for c, mp3, idx in card_widgets}
