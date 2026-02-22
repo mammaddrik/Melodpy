@@ -1,7 +1,7 @@
 <div id="top"></div>
 <p align="center">
     <a href="https://github.com/mammaddrik/Melodpy">
-    <img src="https://i.postimg.cc/RFW74jn0/Melodpy.png" alt="Melodpy logo"></a>
+    <img src="https://i.postimg.cc/yYMtKFNV/Melodpy.png" alt="Melodpy logo"></a>
 </p>
 
 # Melodpy
