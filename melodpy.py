@@ -886,10 +886,10 @@ def fetch_and_show_lyrics(mp3_path):
             final_text = text
             align = "left"
         return final_text, align
-    
+
     global lyric_is_open
     lyric_is_open = True
-    
+
     def close_lyrics():
         global lyric_is_open
         lyric_is_open = False
