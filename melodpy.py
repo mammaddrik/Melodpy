@@ -860,29 +860,21 @@ def show_menu(event, card, mp3_path):
     root.after(200, delayed_popup)
 
 def fetch_and_show_lyrics(mp3_path):
-    global lyric_is_open
-    lyric_is_open = True
-
     if mp3_path != song_files[current_index]:
         popup("You can only see the lyrics of the song\n that's playing right now.",title="Lyrics")
         return
-
     genius = get_genius_client()
     if not genius:
         return
-
     title, artist, _, _ = get_song_info(mp3_path)
-
     try:
         song = genius.search_song(title, artist)
     except Exception as e:
         popup(f"Failed to fetch lyrics from Genius.\nPlease check the token.", title="Lyrics Error")
         return
-
     if not song or not song.lyrics:
         popup("Lyrics were not found.\nCheck the song metadata.", title="Lyrics Not Found")
         return
-
     lyrics_text = regex.sub(r'[^\p{L}\p{N}\s:.]', '', song.lyrics)
 
     def process_multilang_text(text):
@@ -894,7 +886,10 @@ def fetch_and_show_lyrics(mp3_path):
             final_text = text
             align = "left"
         return final_text, align
-
+    
+    global lyric_is_open
+    lyric_is_open = True
+    
     def close_lyrics():
         global lyric_is_open
         lyric_is_open = False
