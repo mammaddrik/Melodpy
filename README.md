@@ -31,7 +31,6 @@ cd Melodpy
 python pip install -r requirements.txt
 python Melodpy.py
 ```
-Or you can use exe file on [releases](https://github.com/mammaddrik/Melodpy/releases)
 
 ### <img src="https://cdn.simpleicons.org/docker/2496ED" width="15" height="15" alt="docker"/> Docker
 install docker on your system. [docker](https://www.docker.com/)
