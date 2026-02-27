@@ -32,12 +32,6 @@ python pip install -r requirements.txt
 python Melodpy.py
 ```
 
-### <img src="https://cdn.simpleicons.org/docker/2496ED" width="15" height="15" alt="docker"/> Docker
-install docker on your system. [docker](https://www.docker.com/)
-```
-docker build -t melodpy .
-docker run -ti melodpy
-```
 ### <img src="https://raw.githubusercontent.com/danielcranney/readme-generator/main/public/icons/skills/linux-colored.svg" width="15" height="15" alt="Linux"/> Linux
 > **Note:** Melodpy isn't compatible with python2, run it with python3 instead.<br>
 ```
